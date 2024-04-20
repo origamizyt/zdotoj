@@ -44,6 +44,7 @@ type WebConfig struct {
 
 // Root configuration section.
 type Config struct {
+	Location	string
 	Core		CoreConfig
 	Database	DatabaseConfig
 	Http		HttpConfig
@@ -61,13 +62,15 @@ func GetConfig() *Config {
 			exe, _ = filepath.EvalSymlinks(exe)
 			if strings.HasPrefix(exe, "/tmp") {
 				// executed with "go run"
-				path = "./config.toml"
+				path, _ = filepath.Abs("./config.toml")
 			} else {
 				path = filepath.Join(filepath.Dir(exe), "config.toml")
 			}
 		}
 		raw_config, _ := os.ReadFile(path)
-		configCache = new(Config)
+		configCache = &Config {
+			Location: path,
+		}
 		toml.Unmarshal(raw_config, configCache)
 	}
 	return configCache

@@ -12,6 +12,11 @@ import { height, width } from '../frontend/const';
 
 const INVALID_DATE = new Date(NaN);
 
+function formatDate(date: Date): string {
+  if (isNaN(date.getTime())) return '';
+  return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}T${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+}
+
 function checkObjective(objective: Objective): string | null {
   if (!objective.name.length) {
     return "请指定问题名。"
@@ -48,7 +53,6 @@ const DesignPage: React.FC<PageProps> = props => {
     objectives: [],
   });
   const [groups, setGroups] = React.useState<Record<string, number>>({});
-  const [isDeadlineInvalid, setIsDeadlineInvalid] = React.useState(false);
   const [addingTag, setAddingTag] = React.useState(false);
   const [addingGroup, setAddingGroup] = React.useState(false);
   const [active, setActive] = React.useState(-1);
@@ -57,8 +61,6 @@ const DesignPage: React.FC<PageProps> = props => {
   const deleter = useDisclosure();
   const cancelRef = React.useRef<HTMLButtonElement>(null);
   const toast = useToast({ position: 'top', duration: 4000 });
-  const timeInputRef = React.useRef<HTMLInputElement>(null);
-  const deadlineInputRef = React.useRef<HTMLInputElement>(null);
 
   const objective = unit.objectives[active];
   const lines = active >= 0 ? objective.template.map(r => r.content.split('\n').length).reduce((a, b) => a+b) : 0;
@@ -76,8 +78,6 @@ const DesignPage: React.FC<PageProps> = props => {
           tags: unit.tags,
           objectives: unit.objectives
         });
-        timeInputRef.current!.valueAsDate = unit.time;
-        deadlineInputRef.current!.valueAsDate = unit.deadline;
       })
     }
     backend.fetchGroups().then(setGroups);
@@ -100,22 +100,24 @@ const DesignPage: React.FC<PageProps> = props => {
           }} value={unit.name}/>
           <Text fontWeight='bold'>开始时间</Text>
           <Input type='datetime-local' onChange={e => {
-            const date = e.target.valueAsDate!;
+            const date = new Date(e.target.value);
             if (date > unit.deadline) {
-              deadlineInputRef.current!.valueAsDate = unit.deadline = unit.time;
+              unit.deadline = unit.time;
             }
             unit.time = date;
-          }} ref={timeInputRef}/>
+            setUnit({...unit});
+          }} value={formatDate(unit.time)}/>
           <Text fontWeight='bold'>截止时间</Text>
           <Input type='datetime-local' onChange={e => {
-            const date = e.target.valueAsDate!;
+            const date = new Date(e.target.value);
             if (date <= unit.time) {
-              e.target.valueAsDate = unit.deadline = unit.time;
+              unit.deadline = unit.time;
             }
             else {
               unit.deadline = date;
             }
-          }} ref={deadlineInputRef}/>
+            setUnit({...unit});
+          }} value={formatDate(unit.deadline)}/>
           <Text fontWeight='bold' textTransform='uppercase'>Groups</Text>
           <HStack flexWrap='wrap'>
             {

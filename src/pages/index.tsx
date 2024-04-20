@@ -304,15 +304,22 @@ const Home: React.FC<PageProps> = () => {
             </Text>
           </Box>
         </ModalBody>
-        <ModalFooter>
+        <ModalFooter as={Stack}>
           { canEnter ?
-          <AniLink to={`/unit?id=${viewingUnit?.id}`} paintDrip hex='#222230' style={{ flexGrow: 1 }}>
+          <AniLink to={`/unit?id=${viewingUnit?.id}`} paintDrip hex='#222230' style={{ flexGrow: 1, width: '100%' }}>
             <Button colorScheme='green' w='100%'>前往</Button>
           </AniLink>
           :
           <Tooltip label='你未登录或不在指定的组中。' placement='top'>
             <Button colorScheme='green' w='100%' isDisabled>前往</Button>
           </Tooltip>
+          }
+          {
+            token && token.subject.admin ?
+            <AniLink to={`/design?id=${viewingUnit?.id}`} paintDrip hex='#222230' style={{ flexGrow: 1, width: '100%' }}>
+              <Button colorScheme='blue' w='100%'>编辑</Button>
+            </AniLink>
+            : undefined
           }
         </ModalFooter>
       </ModalContent>

@@ -100,7 +100,7 @@ func NewServer() Server {
 		AllowOriginFunc(cors.AllowAnyOrigin).
 		AllowHeaders("Accept", "Content-Type", "Authorization").
 		Handler())
-	app.Logger().SetLevel("info")
+	app.Logger().SetLevel("disable")
 
 	if len(cfg.Web.StaticDir) > 0 {
 		var path string
@@ -113,6 +113,9 @@ func NewServer() Server {
 			path = filepath.Join(filepath.Dir(exe), cfg.Web.StaticDir)
 		}
 		app.HandleDir("/", iris.Dir(path))
+		app.OnErrorCode(iris.StatusNotFound, func (ctx iris.Context) {
+			ctx.Redirect("/404", iris.StatusTemporaryRedirect)
+		})
 	}
 
 	api_party := app.Party("/_api")
