@@ -1,0 +1,9 @@
+:root {
+    --chakra-fonts-body: inter, serif;
+}
+
+.captcha {
+    background-color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+}

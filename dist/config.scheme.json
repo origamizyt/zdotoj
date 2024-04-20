@@ -1,0 +1,94 @@
+{
+    "core": {
+        "temporaryFolder": {
+            "$type": "string",
+            "$default": "/tmp/zdotoj",
+            "$prompt": "Where would you like to place the temporary folder?"
+        },
+        "gccPath": {
+            "$type": "string",
+            "$default": "/usr/bin/gcc",
+            "$prompt": "Location of the GNU Compiler Collection:"
+        },
+        "disallowedSyscall": {
+            "$default": [435],
+            "$skip": "Set manually after initialization."
+        },
+        "asyncExecute": {
+            "$type": "boolean",
+            "$default": false,
+            "$skip": "Unstable. Do not enable this feature."
+        }
+    },
+    "database": {
+        "host": {
+            "$type": "string",
+            "$default": "localhost",
+            "$prompt": "Host name of MongoDB server:"
+        },
+        "port": {
+            "$type": "pint",
+            "$default": 27017,
+            "$prompt": "Port of MongoDB server:"
+        },
+        "user": {
+            "$type": "string",
+            "$prompt": "User name for MongoDB (using admin user is not recommended):"
+        },
+        "pass": {
+            "$type": "password",
+            "$prompt": "Password for MongoDB:"
+        },
+        "format": {
+            "$default": "mongodb://%s:%s@%s:%d/?authSource=zdotoj&ssl=false&retryWrites=true",
+            "$skip": "Set manually after initialization."
+        }
+    },
+    "http": {
+        "host": {
+            "$type": "string",
+            "$default": "0.0.0.0",
+            "$prompt": "Http host name to bind to:"
+        },
+        "port": {
+            "$type": "pint",
+            "$default": 80,
+            "$prompt": "Http port number to bind to:"
+        }
+    },
+    "web": {
+        "tokenLife": {
+            "$type": "pint",
+            "$default": 1296000,
+            "$prompt": "Token expiration span in seconds:"
+        },
+        "cookieName": {
+            "$type": "string",
+            "$default": "zdotoj-token",
+            "$prompt": "Http cookie name for token storage:"
+        },
+        "headerName": {
+            "$type": "string",
+            "$default": "x-zdotoj-token",
+            "$prompt": "Http header name for token storage:"
+        },
+        "fullReason": {
+            "$type": "boolean",
+            "$default": true,
+            "$prompt": "Whether to use full reason format or not.\nMust be true for default UI to work properly:"
+        },
+        "staticDir": {
+            "$default": "../public",
+            "$skip": "Set manually after initialization."
+        },
+        "captchaSize": {
+            "$default": [300, 100],
+            "$skip": "Set manually after initialization."
+        },
+        "allowBots": {
+            "$type": "boolean",
+            "$default": true,
+            "$prompt": "Allow captcha-free versions of login / password endpoints?"
+        }
+    }
+}

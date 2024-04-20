@@ -1,0 +1,12 @@
+.cm-editor * {
+    font-family: var(--mono-font) !important;
+    font-size: 14px;
+}
+
+.cm-content {
+    padding: 0 !important;
+}
+
+.cm-activeLine, .cm-activeLineGutter {
+    background-color: transparent !important;
+}
