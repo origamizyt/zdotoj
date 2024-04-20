@@ -185,6 +185,10 @@ type Config struct {
         // 静态文件目录。
         // 如果忽略则不挂载静态文件。
         StaticDir   string
+        // 验证码图片大小
+        CaptchaSize [2]int
+        // 是否允许无需验证码的 API
+        AllowBots   bool
     }
 }
 ```
