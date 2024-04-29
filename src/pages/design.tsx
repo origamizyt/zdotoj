@@ -1,9 +1,9 @@
 import { HeadFC, PageProps, navigate } from "gatsby";
 import React from "react";
 import { Objective, backend, languages, render, getLanguageId, PureUnit, parseQuery } from "../frontend/api";
-import { AlertDialog, AlertDialogBody, AlertDialogCloseButton, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Box, Button, Grid, GridItem, HStack, IconButton, Input, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper, Popover, PopoverArrow, PopoverBody, PopoverContent, PopoverHeader, PopoverTrigger, Select, Slider, SliderFilledTrack, SliderThumb, SliderTrack, Stack, Switch, Tab, TabList, TabPanel, TabPanels, Tabs, Tag, TagCloseButton, TagLabel, TagRightIcon, Text, Textarea, useDisclosure, useToast } from "@chakra-ui/react";
+import { AlertDialog, AlertDialogBody, AlertDialogCloseButton, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Box, Button, FormControl, FormHelperText, FormLabel, Grid, GridItem, HStack, IconButton, Input, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper, Popover, PopoverArrow, PopoverBody, PopoverContent, PopoverHeader, PopoverTrigger, Select, Slider, SliderFilledTrack, SliderThumb, SliderTrack, Stack, Switch, Tab, TabList, TabPanel, TabPanels, Tabs, Tag, TagCloseButton, TagLabel, TagRightIcon, Text, Textarea, useDisclosure, useToast } from "@chakra-ui/react";
 import { Navbar } from "../components/Navbar";
-import { IconArrowBarToLeft, IconArrowBarToRight, IconArrowLeft, IconArrowRight, IconCheck, IconCornerUpLeft, IconCornerUpRight, IconExclamationCircle, IconHelp, IconMarkdown, IconPlus, IconSettings, IconTrashX } from "@tabler/icons-react";
+import { IconArrowBarToLeft, IconArrowBarToRight, IconArrowLeft, IconArrowRight, IconCheck, IconCornerUpLeft, IconCornerUpRight, IconExclamationCircle, IconHelp, IconMarkdown, IconPlus, IconSettings, IconTrash, IconTrashX } from "@tabler/icons-react";
 import DOMPurify from "dompurify";
 import { langs, loadLanguage } from "@uiw/codemirror-extensions-langs";
 import { vscodeDark } from "@uiw/codemirror-theme-vscode";
@@ -25,6 +25,9 @@ function checkObjective(objective: Objective): string | null {
     return "请指定问题描述。"
   }
   if (objective.mode & 0b100) {
+    if (!objective.pointCount) {
+      return "请指定数据点数量。"
+    }
     if (!objective.rScript.length) {
       return "请指定 RandomJudge 脚本。";
     }
@@ -59,7 +62,9 @@ const DesignPage: React.FC<PageProps> = props => {
   const [renderedDescription, setRenderedDescription] = React.useState('');
   const descriptionUpdateRef = React.useRef<any>();
   const deleter = useDisclosure();
+  const remover = useDisclosure();
   const cancelRef = React.useRef<HTMLButtonElement>(null);
+  const cancelWholeRef = React.useRef<HTMLButtonElement>(null);
   const toast = useToast({ position: 'top', duration: 4000 });
 
   const objective = unit.objectives[active];
@@ -93,31 +98,40 @@ const DesignPage: React.FC<PageProps> = props => {
     <Grid templateColumns='repeat(4, 1fr)' h='calc(100vh - 75px - .5rem)'>
       <GridItem colSpan={1} h='100%' borderRightColor='#ffffff17' borderRightWidth={1} >
         <Stack p={3} h='100%'>
-          <Text fontWeight='bold'>单元名称</Text>
-          <Input placeholder='Unit::name' _placeholder={{ fontFamily: 'var(--mono-font)'}} onChange={e => {
-            unit.name = e.target.value;
-            setUnit({...unit});
-          }} value={unit.name}/>
-          <Text fontWeight='bold'>开始时间</Text>
-          <Input type='datetime-local' onChange={e => {
-            const date = new Date(e.target.value);
-            if (date > unit.deadline) {
-              unit.deadline = unit.time;
-            }
-            unit.time = date;
-            setUnit({...unit});
-          }} value={formatDate(unit.time)}/>
-          <Text fontWeight='bold'>截止时间</Text>
-          <Input type='datetime-local' onChange={e => {
-            const date = new Date(e.target.value);
-            if (date <= unit.time) {
-              unit.deadline = unit.time;
-            }
-            else {
-              unit.deadline = date;
-            }
-            setUnit({...unit});
-          }} value={formatDate(unit.deadline)}/>
+          <FormControl>
+            <FormLabel fontWeight='bold'>单元名称</FormLabel>
+            <Input placeholder='Unit::name' _placeholder={{ fontFamily: 'var(--mono-font)'}} onChange={e => {
+              unit.name = e.target.value;
+              setUnit({...unit});
+            }} value={unit.name}/>
+          </FormControl>
+          <FormControl>
+            <FormLabel fontWeight='bold'>开始时间</FormLabel>
+            <Input type='datetime-local' onChange={e => {
+              const date = new Date(e.target.value);
+              if (date > unit.deadline) {
+                unit.deadline = unit.time;
+              }
+              unit.time = date;
+              setUnit({...unit});
+            }} value={formatDate(unit.time)}/>
+            <FormHelperText>
+              开始时间只作为信息提示用户，开始时间前可以作答。
+            </FormHelperText>
+          </FormControl>
+          <FormControl>
+            <FormLabel fontWeight='bold'>截止时间</FormLabel>
+            <Input type='datetime-local' onChange={e => {
+              const date = new Date(e.target.value);
+              if (date <= unit.time) {
+                unit.deadline = unit.time;
+              }
+              else {
+                unit.deadline = date;
+              }
+              setUnit({...unit});
+            }} value={formatDate(unit.deadline)}/>
+          </FormControl>
           <Text fontWeight='bold' textTransform='uppercase'>Groups</Text>
           <HStack flexWrap='wrap'>
             {
@@ -270,6 +284,7 @@ const DesignPage: React.FC<PageProps> = props => {
                   }],
                   mode: 0,
                   language: 0, // C
+                  pointCount: 0,
                   points: [],
                   rScript: "",
                   sScript: "",
@@ -284,25 +299,32 @@ const DesignPage: React.FC<PageProps> = props => {
               </IconButton>
             </Stack>
           </HStack>
-          <Button colorScheme='green' leftIcon={<IconCheck size={16}/>} isDisabled={!unit.objectives.length} onClick={() => {
-            for (let i = 0; i < unit.objectives.length; i++) {
-              const msg = checkObjective(unit.objectives[i]);
-              if (msg) {
-                toast({
-                  title: `#${i+1} ${unit.objectives[i].name}`,
-                  description: msg,
-                  status: 'error'
-                })
-                return;
+          <HStack>
+            <Button colorScheme='green' leftIcon={<IconCheck size={16}/>} flexGrow={1} isDisabled={!unit.objectives.length} onClick={() => {
+              for (let i = 0; i < unit.objectives.length; i++) {
+                const msg = checkObjective(unit.objectives[i]);
+                if (msg) {
+                  toast({
+                    title: `#${i+1} ${unit.objectives[i].name}`,
+                    description: msg,
+                    status: 'error'
+                  })
+                  return;
+                }
+                if (id) {
+                  backend.updateUnit(id, unit).then(() => navigate("/unit?id=" + id));
+                }
+                else {
+                  backend.createUnit(unit).then(() => navigate("/"));
+                }
               }
-              if (id) {
-                backend.updateUnit(id, unit).then(() => navigate("/units?id=" + id));
-              }
-              else {
-                backend.createUnit(unit).then(() => navigate("/"));
-              }
-            }
-          }}>提交</Button>
+            }}>提交</Button>
+            { id ? 
+            <Button colorScheme='red' leftIcon={<IconTrash size={16}/>} flexGrow={1} onClick={remover.onOpen}>
+              删除
+            </Button>
+            : undefined }
+          </HStack>
         </Stack>
       </GridItem>
       <GridItem colSpan={3} h='calc(100vh - 75px - .5rem)'>
@@ -445,7 +467,7 @@ const DesignPage: React.FC<PageProps> = props => {
                                             <NumberInput value={region.indent} size='sm' onChange={n => {
                                               region.indent = parseInt(n);
                                               setUnit({...unit});
-                                            }}>
+                                            }} min={0}>
                                               <NumberInputField/>
                                               <NumberInputStepper>
                                                 <NumberIncrementStepper/>
@@ -551,6 +573,17 @@ const DesignPage: React.FC<PageProps> = props => {
                       </HStack>
                       { objective.mode & 0b100 ?
                       <Box mt={2}>
+                        <Text fontWeight='bold' fontSize={14}>数据点数量</Text>
+                        <NumberInput value={objective.pointCount} size='sm' onChange={n => {
+                          objective.pointCount = parseInt(n);
+                          setUnit({...unit});
+                        }} min={0} mb={2}>
+                          <NumberInputField/>
+                          <NumberInputStepper>
+                            <NumberIncrementStepper/>
+                            <NumberDecrementStepper/>
+                          </NumberInputStepper>
+                        </NumberInput>
                         <CodeMirror
                           style={{ flexGrow: 1 }}
                           theme={vscodeDark}
@@ -610,7 +643,7 @@ const DesignPage: React.FC<PageProps> = props => {
       </GridItem>
     </Grid>
     <AlertDialog leastDestructiveRef={cancelRef} isCentered isOpen={deleter.isOpen} onClose={deleter.onClose}>
-      <AlertDialogOverlay/>
+      <AlertDialogOverlay backdropFilter='blur(5px)'/>
       <AlertDialogContent>
         <AlertDialogCloseButton/>
         <AlertDialogHeader>删除问题</AlertDialogHeader>
@@ -630,6 +663,29 @@ const DesignPage: React.FC<PageProps> = props => {
             unit.objectives.splice(active, 1);
             setUnit({...unit});
             setActive(active-1);
+          }}>确定</Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    <AlertDialog leastDestructiveRef={cancelWholeRef} isCentered isOpen={remover.isOpen} onClose={remover.onClose}>
+      <AlertDialogOverlay backdropFilter='blur(5px)'/>
+      <AlertDialogContent>
+        <AlertDialogCloseButton/>
+        <AlertDialogHeader>删除单元</AlertDialogHeader>
+        <AlertDialogBody display='flex' gap={2}>
+          <Box>
+            <IconExclamationCircle size={50} strokeWidth={1.5}/>
+          </Box>
+          <Box>
+            <Text>确定要删除此单元吗？</Text>
+            <Text>此操作不可撤回。</Text>
+          </Box>
+        </AlertDialogBody>
+        <AlertDialogFooter gap={2}>
+          <Button ref={cancelWholeRef} onClick={remover.onClose}>取消</Button>
+          <Button colorScheme='red' onClick={() => {
+            remover.onClose();
+            backend.removeUnit(id!).then(() => navigate('/'));
           }}>确定</Button>
         </AlertDialogFooter>
       </AlertDialogContent>

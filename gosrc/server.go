@@ -94,13 +94,17 @@ func NewServer() Server {
 
 	app := iris.New()
 	app.UseRouter(recover.New())
+	app.UseRouter(func (ctx iris.Context) {
+		ctx.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+		ctx.Next()
+	})
 	app.UseRouter(cors.New().
 		ExtractOriginFunc(cors.DefaultOriginExtractor).
 		ReferrerPolicy(cors.NoReferrerWhenDowngrade).
 		AllowOriginFunc(cors.AllowAnyOrigin).
 		AllowHeaders("Accept", "Content-Type", "Authorization").
 		Handler())
-	app.Logger().SetLevel("disable")
+	app.Logger().SetLevel("debug")
 
 	if len(cfg.Web.StaticDir) > 0 {
 		var path string
@@ -417,6 +421,22 @@ func NewServer() Server {
 		unit := entireUnit{}
 		ctx.ReadJSON(&unit)
 		db.UpdateUnit(id, unit)
+		ctx.JSON(iris.Map {
+			"ok": true,
+		})
+	})
+
+	api_party.Delete("/units/{id:string}", checkLogin(true), func (ctx iris.Context) {
+		unparsed_id := ctx.Params().Get("id")
+		id, err := primitive.ObjectIDFromHex(unparsed_id)
+		if err != nil {
+			ctx.StopWithJSON(iris.StatusBadRequest, iris.Map {
+				"ok": false,
+				"reason": reasonObjectBadId,
+			})
+			return
+		}
+		db.RemoveUnit(id)
 		ctx.JSON(iris.Map {
 			"ok": true,
 		})

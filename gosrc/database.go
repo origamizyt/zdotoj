@@ -205,7 +205,17 @@ func (d *Database) PutUnit(unit entireUnit) ID {
 func (d *Database) UpdateUnit(id any, unit entireUnit) {
 	id = convertObjectID(id)
 	_, err := d.db.Collection("units").ReplaceOne(
-		context.Background(), bson.M { "_id": id }, unit,
+		context.Background(), bson.M { "_id": id }, toBsonMap(unit, false),
+	)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (d *Database) RemoveUnit(id any) {
+	id = convertObjectID(id)
+	_, err := d.db.Collection("units").DeleteOne(
+		context.Background(), bson.M { "_id": id },
 	)
 	if err != nil {
 		panic(err)

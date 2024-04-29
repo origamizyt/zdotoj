@@ -39,7 +39,7 @@ export interface DataPoint {
     memoryLimit: number
 }
 
-export interface Objective extends Omit<ObjectiveInfo, "pointCount"> {
+export interface Objective extends ObjectiveInfo {
     points: DataPoint[] | null
     rScript: string
     sScript: string
@@ -187,6 +187,7 @@ export interface Backend {
     fetchGroups(): Promise<Record<string, number>>
     createUnit(unit: PureUnit<Objective>): Promise<string>
     updateUnit(id: string, unit: PureUnit<Objective>): Promise<void>
+    removeUnit(id: string): Promise<void>
     getCaptcha(): Promise<[string, string]>;
     login(credential: Credential, captcha: Captcha): Promise<void>
     password(passwords: Passwords, captcha: Captcha): Promise<void>
@@ -387,7 +388,7 @@ export const backend: Backend = {
             }
         }
     },
-    async createUnit(unit): Promise<string> {
+    async createUnit(unit) {
         const resp = await fetch(getApiBase() + '/units', {
             credentials: 'include',
             method: 'POST',
@@ -400,7 +401,7 @@ export const backend: Backend = {
         if (!data.ok) throw data.reason;
         return data.data;
     },
-    async updateUnit(id, unit): Promise<void> {
+    async updateUnit(id, unit) {
         const resp = await fetch(getApiBase() + '/units/' + id, {
             credentials: 'include',
             method: 'PUT',
@@ -412,7 +413,15 @@ export const backend: Backend = {
         const data = await resp.json();
         if (!data.ok) throw data.reason;
     },
-    async getCaptcha(): Promise<[string, string]> {
+    async removeUnit(id) {
+        const resp = await fetch(getApiBase() + '/units/' + id, {
+            credentials: 'include',
+            method: 'DELETE'
+        });
+        const data = await resp.json();
+        if (!data.ok) throw data.reason;
+    },
+    async getCaptcha() {
         const resp = await fetch(getApiBase() + '/account/captcha', {
             credentials: 'include'
         });

@@ -25,7 +25,7 @@ const Home: React.FC<PageProps> = () => {
   React.useEffect(() => {
     setToken(readToken());
     backend.fetchUnits().then(units => {
-      setUnits(units);
+      setUnits(units.sort((a, b) => b.time.getTime() - a.time.getTime()));
       setFilteredUnits(units);
       if (token)
         backend.fetchRecentRecords(5).then(setRecords).catch(() => setNetworkError(true));
